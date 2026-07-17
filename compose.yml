@@ -1,0 +1,27 @@
+services:
+  bunny:
+    build:
+      context: .
+      dockerfile: Containerfile
+    image: localhost/bunny-cli:latest
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:7331/healthz"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    ports:
+      - "127.0.0.1:7331:7331"
+    environment:
+      BUNNY_MASTER_KEY: "${BUNNY_MASTER_KEY:?Set a base64-encoded 32-byte key}"
+      RUST_LOG: "${RUST_LOG:-bunny_web=info}"
+    volumes:
+      - bunny-data:/data:Z
+    security_opt:
+      - no-new-privileges
+    cap_drop:
+      - ALL
+
+volumes:
+  bunny-data:

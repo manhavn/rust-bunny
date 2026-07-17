@@ -5,12 +5,13 @@ use axum::{
     Json, Router,
     extract::{Path, State},
     http::{HeaderMap, StatusCode, header},
-    response::{Html, IntoResponse, Response},
+    response::{IntoResponse, Response},
     routing::{delete, get, post},
 };
 use bunny_app::Database;
 use bunny_core::BunnyClient;
 use http::Method;
+use rust_embed::RustEmbed;
 use secrecy::ExposeSecret;
 use serde::Deserialize;
 use serde_json::json;
@@ -21,6 +22,10 @@ struct WebState {
     database: Database,
 }
 
+#[derive(RustEmbed)]
+#[folder = "../../web/dist/"]
+struct WebAssets;
+
 pub async fn serve(database: Database, address: SocketAddr, open_browser: bool) -> Result<()> {
     let listener = TcpListener::bind(address).await?;
     let local = listener.local_addr()?;
@@ -29,15 +34,39 @@ pub async fn serve(database: Database, address: SocketAddr, open_browser: bool) 
         open::that(&url)?;
     }
     tracing::info!(%url, "Bunny Web is ready");
-    axum::serve(listener, router(database)).await?;
+    axum::serve(listener, router(database))
+        .with_graceful_shutdown(shutdown_signal())
+        .await?;
     Ok(())
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        let _ = tokio::signal::ctrl_c().await;
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        if let Ok(mut signal) =
+            tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+        {
+            signal.recv().await;
+        }
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        () = ctrl_c => {},
+        () = terminate => {},
+    }
 }
 
 fn router(database: Database) -> Router {
     Router::new()
         .route("/", get(index))
-        .route("/assets/app.js", get(app_js))
-        .route("/assets/app.css", get(app_css))
+        .route("/assets/{*path}", get(asset))
         .route("/healthz", get(|| async { Json(json!({"status": "ok"})) }))
         .route("/api/login", post(login))
         .route("/api/profiles", get(profiles))
@@ -58,22 +87,30 @@ fn router(database: Database) -> Router {
         .with_state(Arc::new(WebState { database }))
 }
 
-async fn index() -> Html<&'static str> {
-    Html(include_str!("../../../web/dist/index.html"))
+async fn index() -> Response {
+    embedded("index.html")
 }
 
-async fn app_js() -> impl IntoResponse {
-    (
-        [(header::CONTENT_TYPE, "text/javascript; charset=utf-8")],
-        include_bytes!("../../../web/dist/assets/app.js").as_slice(),
-    )
+async fn asset(Path(path): Path<String>) -> Response {
+    embedded(&format!("assets/{path}"))
 }
 
-async fn app_css() -> impl IntoResponse {
-    (
-        [(header::CONTENT_TYPE, "text/css; charset=utf-8")],
-        include_bytes!("../../../web/dist/assets/app.css").as_slice(),
-    )
+fn embedded(path: &str) -> Response {
+    let Some(asset) = WebAssets::get(path) else {
+        return StatusCode::NOT_FOUND.into_response();
+    };
+    let content_type = if path.ends_with(".html") {
+        "text/html; charset=utf-8"
+    } else if path.ends_with(".js") {
+        "text/javascript; charset=utf-8"
+    } else if path.ends_with(".css") {
+        "text/css; charset=utf-8"
+    } else if path.ends_with(".svg") {
+        "image/svg+xml"
+    } else {
+        "application/octet-stream"
+    };
+    ([(header::CONTENT_TYPE, content_type)], asset.data).into_response()
 }
 
 #[derive(Deserialize)]

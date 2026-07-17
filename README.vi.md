@@ -49,6 +49,32 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace
 ```
 
+### Script release thống nhất
+
+`build-release.sh` luôn format Rust trước khi build, cài frontend dependency theo
+lockfile, chạy lint/type check, tạo các Vite chunk lazy-load, kiểm tra/test Rust
+workspace và build binary theo môi trường được chọn:
+
+```bash
+./build-release.sh
+./build-release.sh --profile dev
+./build-release.sh --target aarch64-unknown-linux-gnu
+./build-release.sh --all
+```
+
+Cross compile ưu tiên `cargo-zigbuild` và Zig nếu đã cài. Target Apple vẫn cần
+Apple SDK/toolchain. Chỉ dùng `--no-checks` khi lặp lại build cục bộ; `cargo fmt`
+và frontend production build vẫn luôn chạy.
+
+Build đồng thời binary native và Podman image:
+
+```bash
+./build-release.sh --container
+./build-release.sh --container \
+  --container-tag registry.example.com/bunny-cli:0.1.0 \
+  --platform linux/arm64
+```
+
 ## Sử dụng lần đầu
 
 Thêm account API key qua hidden prompt:
@@ -163,6 +189,11 @@ Web UI hỗ trợ:
 - Import/export settings và full encrypted backup.
 - Layout desktop, tablet và mobile.
 
+Dashboard, credential manager, Web-token manager, settings và operation runner
+được tách thành các lazy-loaded chunk. Browser chỉ tải module khi màn hình tương
+ứng được mở. Rust server embed và phục vụ toàn bộ Vite asset directory, vì vậy
+runtime không cần chạy Node.js.
+
 Web token chỉ xác thực Web UI cục bộ. Browser không bao giờ nhận Bunny API key
 đã lưu.
 
@@ -176,6 +207,50 @@ bunny web-token delete TOKEN_ID --yes
 ```
 
 Khi tạo hoặc rotate, plaintext token mới chỉ được in đúng một lần.
+
+## Chạy bằng Podman container
+
+Image chạy `bunny web serve` bằng user không đặc quyền, lưu database trong
+`/data`, mở cổng `7331`, có health check và loại bỏ toàn bộ Linux capability
+trong Compose configuration đi kèm.
+
+Tạo encryption key bền vững một lần và lưu trong secret manager:
+
+```bash
+export BUNNY_MASTER_KEY="$(openssl rand -base64 32)"
+```
+
+Khởi chạy service; mặc định chỉ publish ra localhost:
+
+```bash
+podman compose -f compose.yml up -d --build
+```
+
+Tạo Web login token đầu tiên trong cùng persistent volume:
+
+```bash
+podman compose -f compose.yml run --rm bunny \
+  web-token create --name browser
+```
+
+Mở <http://127.0.0.1:7331> và nhập token chỉ được in một lần. SQLite database
+được giữ lại trong volume `bunny-data` khi nâng cấp image.
+
+Chạy không qua Compose:
+
+```bash
+podman build --format docker -t localhost/bunny-cli:latest -f Containerfile .
+podman volume create bunny-data
+podman run --rm -d --name bunny-cli \
+  -p 127.0.0.1:7331:7331 \
+  -e BUNNY_MASTER_KEY \
+  -v bunny-data:/data:Z \
+  localhost/bunny-cli:latest
+```
+
+Không thay đổi `BUNNY_MASTER_KEY` sau khi đã lưu credential. Nếu mất key này,
+Bunny API key trong database không thể giải mã. Hãy tạo full encrypted backup
+trước khi chuyển container hoặc thay local master key.
 
 ## Quản lý Bunny credential
 

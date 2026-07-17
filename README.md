@@ -49,6 +49,32 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace
 ```
 
+### Unified release script
+
+`build-release.sh` formats Rust sources before every build, installs locked
+frontend dependencies, runs frontend lint/type checks, creates lazy-loaded Vite
+chunks, checks/tests the Rust workspace, and builds the requested binary:
+
+```bash
+./build-release.sh
+./build-release.sh --profile dev
+./build-release.sh --target aarch64-unknown-linux-gnu
+./build-release.sh --all
+```
+
+Cross compilation prefers `cargo-zigbuild` and Zig when available. Apple targets
+still require an Apple SDK/toolchain. Use `--no-checks` only for a repeated local
+build; `cargo fmt` and the frontend production build still run.
+
+Build a native binary and Podman image together:
+
+```bash
+./build-release.sh --container
+./build-release.sh --container \
+  --container-tag registry.example.com/bunny-cli:0.1.0 \
+  --platform linux/arm64
+```
+
 ## First use
 
 Add an account API key through a hidden prompt:
@@ -166,6 +192,11 @@ The Web UI provides:
 - Settings export and encrypted full backup import/export.
 - Desktop, tablet, and mobile layouts.
 
+Dashboard, credential manager, Web-token manager, settings, and operation runner
+are separate lazy-loaded chunks. A browser downloads each module only when its
+screen is opened. The Rust server embeds and serves the complete Vite asset
+directory, so no Node.js process is required at runtime.
+
 The Web token authenticates the local UI. The browser never receives stored
 Bunny API keys.
 
@@ -179,6 +210,50 @@ bunny web-token delete TOKEN_ID --yes
 ```
 
 Rotation and creation print the new plaintext token once.
+
+## Run as a Podman container
+
+The image runs `bunny web serve` as an unprivileged user, stores its database in
+`/data`, exposes port `7331`, includes a health check, and drops all Linux
+capabilities in the supplied Compose configuration.
+
+Create a persistent encryption key once and keep it in a secret manager:
+
+```bash
+export BUNNY_MASTER_KEY="$(openssl rand -base64 32)"
+```
+
+Start the service, bound to localhost by default:
+
+```bash
+podman compose -f compose.yml up -d --build
+```
+
+Create the first Web login token in the same persistent volume:
+
+```bash
+podman compose -f compose.yml run --rm bunny \
+  web-token create --name browser
+```
+
+Open <http://127.0.0.1:7331> and enter the token printed once by the command.
+The SQLite database survives image upgrades in the `bunny-data` volume.
+
+Run without Compose:
+
+```bash
+podman build --format docker -t localhost/bunny-cli:latest -f Containerfile .
+podman volume create bunny-data
+podman run --rm -d --name bunny-cli \
+  -p 127.0.0.1:7331:7331 \
+  -e BUNNY_MASTER_KEY \
+  -v bunny-data:/data:Z \
+  localhost/bunny-cli:latest
+```
+
+Do not change `BUNNY_MASTER_KEY` after credentials have been stored. Losing it
+makes the encrypted Bunny API keys unreadable. Create a full encrypted backup
+before moving the container or rotating the local master key.
 
 ## Credential management
 
@@ -261,4 +336,3 @@ token hashes, sessions, and audit metadata use the single SQLite database.
 ## License
 
 MIT
-

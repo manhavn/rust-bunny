@@ -12,6 +12,7 @@ base64.workspace = true
 chrono.workspace = true
 http.workspace = true
 open.workspace = true
+rust-embed.workspace = true
 secrecy.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -21,4 +22,3 @@ tracing.workspace = true
 uuid.workspace = true
 bunny-app = { path = "../bunny-app" }
 bunny-core = { path = "../bunny-core" }
-
