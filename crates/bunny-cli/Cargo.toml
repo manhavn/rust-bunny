@@ -1,0 +1,28 @@
+[package]
+name = "bunny-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "bunny"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+chrono.workspace = true
+clap.workspace = true
+open.workspace = true
+reqwest.workspace = true
+rpassword.workspace = true
+secrecy.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+bunny-app = { path = "../bunny-app" }
+bunny-core = { path = "../bunny-core" }
+bunny-web = { path = "../bunny-web" }
