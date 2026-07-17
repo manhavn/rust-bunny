@@ -131,8 +131,6 @@ enum WebCommand {
         host: IpAddr,
         #[arg(long, default_value_t = 7331)]
         port: u16,
-        #[arg(long)]
-        no_open: bool,
     },
     Open {
         #[arg(long, default_value_t = 7331)]
@@ -302,12 +300,8 @@ async fn run() -> Result<()> {
             }
         },
         Command::Web { command } => match command {
-            WebCommand::Serve {
-                host,
-                port,
-                no_open,
-            } => {
-                bunny_web::serve(database, SocketAddr::new(host, port), !no_open).await?;
+            WebCommand::Serve { host, port } => {
+                bunny_web::serve(database, SocketAddr::new(host, port)).await?;
             }
             WebCommand::Open { port } => {
                 open::that(format!("http://127.0.0.1:{port}"))?;

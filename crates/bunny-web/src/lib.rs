@@ -26,14 +26,11 @@ struct WebState {
 #[folder = "../../web/dist/"]
 struct WebAssets;
 
-pub async fn serve(database: Database, address: SocketAddr, open_browser: bool) -> Result<()> {
+pub async fn serve(database: Database, address: SocketAddr) -> Result<()> {
     let listener = TcpListener::bind(address).await?;
     let local = listener.local_addr()?;
     let url = format!("http://{local}");
-    if open_browser {
-        open::that(&url)?;
-    }
-    tracing::info!(%url, "Bunny Web is ready");
+    println!("{url}");
     axum::serve(listener, router(database))
         .with_graceful_shutdown(shutdown_signal())
         .await?;

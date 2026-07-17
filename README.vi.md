@@ -184,11 +184,8 @@ Plaintext token chỉ hiển thị một lần. Sau đó khởi chạy Web:
 bunny web serve
 ```
 
-Trình duyệt mặc định mở `http://127.0.0.1:7331`. Chạy mà không tự mở browser:
-
-```bash
-bunny web serve --no-open
-```
+Lệnh in `http://127.0.0.1:7331` và không tự động mở trình duyệt. Bạn tự mở URL
+đó, hoặc chạy `bunny web open` khi server đang hoạt động.
 
 Web UI hỗ trợ:
 

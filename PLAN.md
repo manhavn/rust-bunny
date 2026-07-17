@@ -267,13 +267,13 @@ bunny api request <METHOD> <PATH> \
 ### 5.1. Khởi chạy Web UI
 
 ```bash
-bunny web serve [--host 127.0.0.1] [--port 0] [--no-open]
+bunny web serve [--host 127.0.0.1] [--port 7331]
 bunny web open
 bunny web status
 ```
 
-- `web serve` khởi chạy HTTP server, mặc định chỉ bind `127.0.0.1`; port `0`
-  chọn port trống và tự mở browser. `--no-open` dành cho headless/CI.
+- `web serve` khởi chạy HTTP server, mặc định chỉ bind `127.0.0.1:7331`, in URL
+  ra terminal và không tự mở browser.
 - `web open` mở browser tới server đang chạy; nếu chưa có server thì khởi chạy
   background process và chờ health check.
 - URL mở browser không chứa Bunny API key. Có thể dùng bootstrap token một lần,

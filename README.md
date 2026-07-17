@@ -187,12 +187,9 @@ The plaintext token is displayed once. Then start the local server:
 bunny web serve
 ```
 
-The default browser opens at `http://127.0.0.1:7331`. To run without opening a
-browser:
-
-```bash
-bunny web serve --no-open
-```
+The command prints `http://127.0.0.1:7331` and does not open a browser
+automatically. Open that URL yourself, or run `bunny web open` while the server
+is running.
 
 The Web UI provides:
 
