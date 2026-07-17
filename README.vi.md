@@ -58,13 +58,21 @@ workspace và build binary theo môi trường được chọn:
 ```bash
 ./build-release.sh
 ./build-release.sh --profile dev
-./build-release.sh --target aarch64-unknown-linux-gnu
+./build-release.sh --target aarch64-unknown-linux-musl
 ./build-release.sh --all
 ```
 
-Cross compile ưu tiên `cargo-zigbuild` và Zig nếu đã cài. Target Apple vẫn cần
-Apple SDK/toolchain. Chỉ dùng `--no-checks` khi lặp lại build cục bộ; `cargo fmt`
-và frontend production build vẫn luôn chạy.
+Cross compile dùng `cargo-zigbuild` và Zig nếu đã cài, sau đó fallback sang
+[`cross`](https://github.com/cross-rs/cross) với Podman hoặc Docker. Lệnh ARM64
+musl ở trên tạo `target/aarch64-unknown-linux-musl/release/bunny`. Cài cross
+compiler bằng:
+
+```bash
+cargo install cross --git https://github.com/cross-rs/cross
+```
+
+Target Apple vẫn cần Apple SDK/toolchain. Chỉ dùng `--no-checks` khi lặp lại
+build cục bộ; `cargo fmt` và frontend production build vẫn luôn chạy.
 
 Build đồng thời binary native và Podman image:
 

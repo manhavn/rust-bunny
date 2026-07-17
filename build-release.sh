@@ -47,8 +47,9 @@ Common Rust targets:
   x86_64-apple-darwin            macOS amd64
   aarch64-apple-darwin           macOS arm64
 
-The script always runs cargo fmt before building. Cross builds prefer
-cargo-zigbuild when it is installed. Apple targets still require Apple's SDK.
+The script always runs cargo fmt before building. Cross builds use
+cargo-zigbuild when available, then cross with Podman or Docker. Apple targets
+still require Apple's SDK.
 EOF
 }
 
@@ -159,18 +160,29 @@ build_target() {
   case "$target" in *windows*) binary_name="$APP_NAME.exe" ;; esac
 
   if command -v cargo-zigbuild >/dev/null 2>&1; then
+    printf 'Cross compiler: cargo-zigbuild\n'
     if [ -n "$profile_flag" ]; then
       cargo zigbuild --locked "$profile_flag" --target "$target" --bin "$APP_NAME"
     else
       cargo zigbuild --locked --target "$target" --bin "$APP_NAME"
     fi
-  else
-    rustup target add "$target"
-    if [ -n "$profile_flag" ]; then
-      cargo build --locked "$profile_flag" --target "$target" --bin "$APP_NAME"
-    else
-      cargo build --locked --target "$target" --bin "$APP_NAME"
+  elif command -v cross >/dev/null 2>&1; then
+    if [ -z "${CROSS_CONTAINER_ENGINE:-}" ] && command -v podman >/dev/null 2>&1; then
+      CROSS_CONTAINER_ENGINE=podman
+      export CROSS_CONTAINER_ENGINE
     fi
+    printf 'Cross compiler: cross (container engine: %s)\n' "${CROSS_CONTAINER_ENGINE:-auto}"
+    if [ -n "$profile_flag" ]; then
+      cross build --locked "$profile_flag" --target "$target" --bin "$APP_NAME"
+    else
+      cross build --locked --target "$target" --bin "$APP_NAME"
+    fi
+  else
+    printf '%s\n' \
+      'Error: no cross-compilation tool is installed.' \
+      'Install cargo-zigbuild with Zig, or install cross and Podman/Docker:' \
+      '  cargo install cross --git https://github.com/cross-rs/cross' >&2
+    exit 1
   fi
   printf 'Binary: %s\n' "$(pwd)/target/$target/$output_profile/$binary_name"
 }

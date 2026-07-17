@@ -58,13 +58,21 @@ chunks, checks/tests the Rust workspace, and builds the requested binary:
 ```bash
 ./build-release.sh
 ./build-release.sh --profile dev
-./build-release.sh --target aarch64-unknown-linux-gnu
+./build-release.sh --target aarch64-unknown-linux-musl
 ./build-release.sh --all
 ```
 
-Cross compilation prefers `cargo-zigbuild` and Zig when available. Apple targets
-still require an Apple SDK/toolchain. Use `--no-checks` only for a repeated local
-build; `cargo fmt` and the frontend production build still run.
+Cross compilation uses `cargo-zigbuild` and Zig when available, then falls back
+to [`cross`](https://github.com/cross-rs/cross) with Podman or Docker. The ARM64
+musl command above creates `target/aarch64-unknown-linux-musl/release/bunny`.
+Install a cross compiler with:
+
+```bash
+cargo install cross --git https://github.com/cross-rs/cross
+```
+
+Apple targets still require an Apple SDK/toolchain. Use `--no-checks` only for a
+repeated local build; `cargo fmt` and the frontend production build still run.
 
 Build a native binary and Podman image together:
 
