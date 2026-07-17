@@ -190,15 +190,16 @@ Lệnh in `http://127.0.0.1:7331` và không tự động mở trình duyệt. B
 Web UI hỗ trợ:
 
 - Điều hướng đủ 95 Core operation.
-- Form path/query, JSON request body và response đã format.
+- Form path/query, JSON body chỉnh sửa được và điền sẵn theo schema Core OpenAPI
+  chính thức của Bunny, cùng response đã format.
 - Tổng quan connection và credential đang dùng.
 - Import/export settings và full encrypted backup.
 - Layout desktop, tablet và mobile.
 
-Dashboard, credential manager, Web-token manager, settings và operation runner
-được tách thành các lazy-loaded chunk. Browser chỉ tải module khi màn hình tương
-ứng được mở. Rust server embed và phục vụ toàn bộ Vite asset directory, vì vậy
-runtime không cần chạy Node.js.
+Dashboard, credential manager, Web-token manager, settings, operation runner và
+dữ liệu JSON mẫu được tách thành các lazy-loaded chunk. Browser chỉ tải module
+khi màn hình tương ứng được mở. Rust server embed và phục vụ toàn bộ Vite asset
+directory, vì vậy runtime không cần chạy Node.js.
 
 Web token chỉ xác thực Web UI cục bộ. Browser không bao giờ nhận Bunny API key
 đã lưu.

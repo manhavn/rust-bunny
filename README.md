@@ -194,15 +194,16 @@ is running.
 The Web UI provides:
 
 - Resource navigation for all 95 Core operations.
-- Typed path/query fields, JSON request bodies, and formatted responses.
+- Typed path/query fields, editable JSON bodies pre-filled from Bunny's official
+  Core OpenAPI schemas, and formatted responses.
 - Credential status and local connection overview.
 - Settings export and encrypted full backup import/export.
 - Desktop, tablet, and mobile layouts.
 
-Dashboard, credential manager, Web-token manager, settings, and operation runner
-are separate lazy-loaded chunks. A browser downloads each module only when its
-screen is opened. The Rust server embeds and serves the complete Vite asset
-directory, so no Node.js process is required at runtime.
+Dashboard, credential manager, Web-token manager, settings, operation runner,
+and request examples are separate lazy-loaded chunks. A browser downloads each
+module only when its screen is opened. The Rust server embeds and serves the
+complete Vite asset directory, so no Node.js process is required at runtime.
 
 The Web token authenticates the local UI. The browser never receives stored
 Bunny API keys.

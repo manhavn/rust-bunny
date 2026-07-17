@@ -14,6 +14,7 @@
   let params = $state<Record<string, string>>({})
   let queryText = $state('')
   let bodyText = $state('{}')
+  let bodyExample = $state<string | null>(null)
   let result = $state('')
   let busy = $state(false)
   let theme = $state(localStorage.getItem('bunny-theme') ?? 'dark')
@@ -68,11 +69,22 @@
     webTokens = tokenResponse.ok ? await tokenResponse.json() : []
   }
 
-  function selectOperation(operation: Operation) {
+  async function selectOperation(operation: Operation) {
     selected = operation
     params = {}
+    queryText = ''
+    bodyText = ''
+    bodyExample = null
     result = ''
     sidebarOpen = false
+    const examples = await import('./generated/requestExamples')
+    if (selected?.id !== operation.id) return
+    bodyExample = examples.requestBodyExample(operation)
+    bodyText = bodyExample ?? ''
+  }
+
+  function resetRequestBody() {
+    bodyText = bodyExample ?? ''
   }
 
   async function runOperation() {
@@ -334,10 +346,12 @@
               bind:params
               bind:queryText
               bind:bodyText
+              {bodyExample}
               {result}
               {busy}
               onBack={() => selected = null}
               onRun={runOperation}
+              onResetBody={resetRequestBody}
             />
           {/await}
         {:else}
