@@ -47,6 +47,9 @@ Common Rust targets:
   x86_64-apple-darwin            macOS amd64
   aarch64-apple-darwin           macOS arm64
 
+Architecture aliases amd64 and arm64 are accepted and normalized to Rust's
+x86_64 and aarch64 target names.
+
 The script always runs cargo fmt before building. Cross builds use
 cargo-zigbuild when available, then cross with Podman or Docker. Apple targets
 still require Apple's SDK.
@@ -103,6 +106,19 @@ while [ "$#" -gt 0 ]; do
   esac
   shift
 done
+
+case "$TARGET" in
+  amd64-*)
+    original_target="$TARGET"
+    TARGET="x86_64-${TARGET#amd64-}"
+    printf 'Target alias: %s -> %s\n' "$original_target" "$TARGET"
+    ;;
+  arm64-*)
+    original_target="$TARGET"
+    TARGET="aarch64-${TARGET#arm64-}"
+    printf 'Target alias: %s -> %s\n' "$original_target" "$TARGET"
+    ;;
+esac
 
 printf '%s\n' '==> Formatting Rust sources'
 cargo fmt --all

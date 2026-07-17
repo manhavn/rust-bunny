@@ -65,7 +65,8 @@ workspace và build binary theo môi trường được chọn:
 Cross compile dùng `cargo-zigbuild` và Zig nếu đã cài, sau đó fallback sang
 [`cross`](https://github.com/cross-rs/cross) với Podman hoặc Docker. Lệnh ARM64
 musl ở trên tạo `target/aarch64-unknown-linux-musl/release/bunny`. Cài cross
-compiler bằng:
+Script cũng chấp nhận `amd64-unknown-linux-musl` và tự chuyển thành target Rust
+chuẩn `x86_64-unknown-linux-musl`. Cài cross compiler bằng:
 
 ```bash
 cargo install cross --git https://github.com/cross-rs/cross

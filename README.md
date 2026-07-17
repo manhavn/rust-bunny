@@ -65,6 +65,8 @@ chunks, checks/tests the Rust workspace, and builds the requested binary:
 Cross compilation uses `cargo-zigbuild` and Zig when available, then falls back
 to [`cross`](https://github.com/cross-rs/cross) with Podman or Docker. The ARM64
 musl command above creates `target/aarch64-unknown-linux-musl/release/bunny`.
+The script also accepts `amd64-unknown-linux-musl` and normalizes it to Rust's
+canonical `x86_64-unknown-linux-musl` target.
 Install a cross compiler with:
 
 ```bash
