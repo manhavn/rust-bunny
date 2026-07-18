@@ -27,16 +27,58 @@
   let credentialKey = $state('')
   let tokenName = $state('')
   let oneTimeToken = $state('')
+  let uiMode = $state(localStorage.getItem('bunny-core-ui-mode') === 'on')
 
   const groups = $derived([...new Set(operations.map(operation => operation.group))])
+  const groupOperations = $derived(
+    operations.filter(operation => activeGroup === 'all' || operation.group === activeGroup),
+  )
   const visibleOperations = $derived(
-    operations.filter(operation =>
-      (activeGroup === 'all' || operation.group === activeGroup) &&
+    groupOperations.filter(operation =>
       `${operation.id} ${operation.summary} ${operation.path}`.toLowerCase().includes(search.toLowerCase())
     )
   )
   function authHeaders() {
     return { authorization: `Bearer ${token}` }
+  }
+
+  function setUiMode(value: boolean) {
+    uiMode = value
+    selected = null
+    localStorage.setItem('bunny-core-ui-mode', value ? 'on' : 'off')
+  }
+
+  async function executeOperation(
+    operation: Operation,
+    operationParams: Record<string, string> = {},
+    query: [string, string][] = [],
+    body: unknown = null,
+  ) {
+    const response = await fetch(`/api/operations/${encodeURIComponent(operation.id)}/run`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'content-type': 'application/json' },
+      body: JSON.stringify({
+        profile: 'default',
+        params: operationParams,
+        query,
+        body,
+        confirm: operation.destructive,
+      }),
+    })
+    const text = await response.text()
+    let payload: unknown = text
+    try {
+      payload = JSON.parse(text)
+    } catch {
+      // Binary and plain-text endpoints remain readable in the admin response.
+    }
+    if (!response.ok) {
+      const message = typeof payload === 'object' && payload && 'error' in payload
+        ? String(payload.error)
+        : text || `Request failed with HTTP ${response.status}`
+      throw new Error(message)
+    }
+    return payload
   }
 
   async function login() {
@@ -100,19 +142,13 @@
         const [key, value = ''] = pair.split('=')
         return [decodeURIComponent(key), decodeURIComponent(value)]
       })
-      const response = await fetch(`/api/operations/${encodeURIComponent(selected.id)}/run`, {
-        method: 'POST',
-        headers: { ...authHeaders(), 'content-type': 'application/json' },
-        body: JSON.stringify({
-          profile: 'default',
-          params,
-          query,
-          body: selected.method === 'GET' || !bodyText.trim() ? null : JSON.parse(bodyText),
-          confirm: selected.destructive,
-        }),
-      })
-      const text = await response.text()
-      try { result = JSON.stringify(JSON.parse(text), null, 2) } catch { result = text }
+      const payload = await executeOperation(
+        selected,
+        params,
+        query as [string, string][],
+        selected.method === 'GET' || !bodyText.trim() ? null : JSON.parse(bodyText),
+      )
+      result = typeof payload === 'string' ? payload : JSON.stringify(payload, null, 2)
     } catch (error) {
       result = error instanceof Error ? error.message : String(error)
     } finally {
@@ -268,6 +304,17 @@
       <div class="brand"><span class="brand-mark">B</span><strong>Bunny CLI</strong></div>
       <div class="top-actions">
         <span class="connection"><i></i> Local</span>
+        <button
+          class="ui-mode-toggle"
+          class:enabled={uiMode}
+          type="button"
+          role="switch"
+          aria-checked={uiMode}
+          title="Switch Core API groups between operations documentation and admin UI"
+          onclick={() => setUiMode(!uiMode)}
+        >
+          <span>UI mode</span><i class:active={!uiMode}>OFF</i><i class:active={uiMode}>ON</i>
+        </button>
         <button class="icon-button" onclick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="Toggle theme">
           {theme === 'dark' ? '☀' : '☾'}
         </button>
@@ -357,6 +404,21 @@
               onRun={runOperation}
               onResetBody={resetRequestBody}
             />
+          {/await}
+        {:else if uiMode}
+          {#await import('./components/AdminResourceView.svelte') then { default: AdminResourceView }}
+            <AdminResourceView
+              group={activeGroup}
+              operations={groupOperations}
+              allOperations={operations}
+              onExecute={executeOperation}
+              onNavigate={(group) => {
+                activeGroup = group
+                selected = null
+              }}
+            />
+          {:catch error}
+            <section class="panel error">Could not load admin UI: {error.message}</section>
           {/await}
         {:else}
           <section class="page-head">

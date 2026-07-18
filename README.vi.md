@@ -194,6 +194,9 @@ Web UI hỗ trợ:
   chính thức của Bunny, nút copy cURL và response đã format.
 - Form mode tùy chọn với select enum, preset TTL, input đúng kiểu, công tắc
   boolean, trình sửa array/object JSON, đánh dấu required và submit trực tiếp.
+- Core UI mode lưu trạng thái, có resource dashboard, bảng dữ liệu trực tiếp,
+  tìm kiếm, refresh, action từng dòng, form create/edit theo schema, xác nhận
+  delete, xem chi tiết và nhóm action ngoài CRUD.
 - Tổng quan connection và credential đang dùng.
 - Import/export settings và full encrypted backup.
 - Layout desktop, tablet và mobile.
@@ -205,6 +208,11 @@ directory, vì vậy runtime không cần chạy Node.js.
 
 Web token chỉ xác thực Web UI cục bộ. Browser không bao giờ nhận Bunny API key
 đã lưu.
+
+Dùng công tắc `UI mode [OFF | ON]` trên top bar để đổi phần Core API từ catalog
+operation sang giao diện quản trị. Trạng thái được lưu trong browser. Mục `All
+operations` trở thành resource hub; mỗi nhóm Core tự tải collection endpoint và
+hiển thị các khả năng CRUD có trong Bunny OpenAPI registry.
 
 ### Phát triển local
 

@@ -198,6 +198,9 @@ The Web UI provides:
   Core OpenAPI schemas, one-click cURL copying, and formatted responses.
 - Optional form mode with enum selects, TTL presets, typed inputs, boolean
   switches, JSON collection editors, required markers, and direct submission.
+- Persistent Core UI mode with resource dashboards, live collection tables,
+  search, refresh, row actions, schema-driven create/edit forms, delete
+  confirmation, detail views, and grouped non-CRUD actions.
 - Credential status and local connection overview.
 - Settings export and encrypted full backup import/export.
 - Desktop, tablet, and mobile layouts.
@@ -209,6 +212,12 @@ complete Vite asset directory, so no Node.js process is required at runtime.
 
 The Web token authenticates the local UI. The browser never receives stored
 Bunny API keys.
+
+Use the `UI mode [OFF | ON]` switch in the top bar to change Core API navigation
+from the operation catalog to an admin interface. The preference is stored in
+the browser. `All operations` becomes a resource hub, while each Core group
+loads its collection endpoint and exposes the CRUD capabilities available in
+the Bunny OpenAPI registry.
 
 ### Local development
 
