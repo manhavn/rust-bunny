@@ -362,7 +362,7 @@
           <section class="operation-list">
             {#each visibleOperations as operation (operation.id)}
               <button class="operation-card" onclick={() => selectOperation(operation)}>
-                <span class:danger={operation.destructive} class="method">{operation.method}</span>
+                <span class={`method method-${operation.method.toLowerCase()}`}>{operation.method}</span>
                 <span><strong>{operation.summary}</strong><code>{operation.path}</code></span><i>›</i>
               </button>
             {/each}

@@ -88,7 +88,7 @@
 <section class="page-head">
   <button class="back" onclick={onBack}>← Operations</button>
   <div class="operation-title">
-    <span class:danger={operation.destructive} class="method">{operation.method}</span>
+    <span class={`method method-${operation.method.toLowerCase()}`}>{operation.method}</span>
     <div><h1>{operation.summary}</h1><code>{operation.path}</code></div>
   </div>
 </section>
