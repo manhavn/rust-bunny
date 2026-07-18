@@ -195,7 +195,7 @@ The Web UI provides:
 
 - Resource navigation for all 95 Core operations.
 - Typed path/query fields, editable JSON bodies pre-filled from Bunny's official
-  Core OpenAPI schemas, and formatted responses.
+  Core OpenAPI schemas, one-click cURL copying, and formatted responses.
 - Credential status and local connection overview.
 - Settings export and encrypted full backup import/export.
 - Desktop, tablet, and mobile layouts.

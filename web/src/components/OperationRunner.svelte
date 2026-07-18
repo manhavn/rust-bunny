@@ -26,6 +26,63 @@
   } = $props()
 
   const pathKeys = $derived([...operation.path.matchAll(/\{([^}]+)\}/g)].map(match => match[1]))
+  let copyLabel = $state('Copy cURL')
+
+  function shellQuote(value: string) {
+    return `'${value.replaceAll("'", `'"'"'`)}'`
+  }
+
+  function buildCurl() {
+    const path = operation.path.replace(/\{([^}]+)\}/g, (_, key: string) =>
+      encodeURIComponent(params[key] || key.toUpperCase()),
+    )
+    const query = queryText.trim().replace(/^\?/, '')
+    const url = `https://api.bunny.net${path}${query ? `?${query}` : ''}`
+    const parts = [
+      `curl --request ${operation.method}`,
+      `  --url ${shellQuote(url)}`,
+      `  --header ${shellQuote('AccessKey: YOUR_BUNNY_API_KEY')}`,
+    ]
+    if (bodyExample !== null && bodyText.trim()) {
+      parts.push(
+        `  --header ${shellQuote('Content-Type: application/json')}`,
+        `  --data-raw ${shellQuote(bodyText.trim())}`,
+      )
+    }
+    return parts.join(' \\\n')
+  }
+
+  function legacyCopy(value: string) {
+    const textarea = document.createElement('textarea')
+    textarea.value = value
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.append(textarea)
+    textarea.select()
+    const copied = document.execCommand('copy')
+    textarea.remove()
+    if (!copied) throw new Error('Clipboard copy was rejected')
+  }
+
+  async function copyCurl() {
+    try {
+      const curl = buildCurl()
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(curl)
+      } else {
+        legacyCopy(curl)
+      }
+      copyLabel = 'Copied!'
+    } catch {
+      try {
+        legacyCopy(buildCurl())
+        copyLabel = 'Copied!'
+      } catch {
+        copyLabel = 'Copy failed'
+      }
+    }
+    window.setTimeout(() => copyLabel = 'Copy cURL', 1800)
+  }
 </script>
 
 <section class="page-head">
@@ -37,7 +94,10 @@
 </section>
 <section class="operation-grid">
   <div class="panel form-panel">
-    <h2>Request</h2>
+    <div class="request-heading">
+      <h2>Request</h2>
+      <button class="secondary curl-button" type="button" onclick={copyCurl}>{copyLabel}</button>
+    </div>
     {#each pathKeys as key (key)}
       <label>{key}<input bind:value={params[key]} placeholder={`Path parameter: ${key}`} /></label>
     {/each}
