@@ -27,9 +27,16 @@
     onResetBody: () => void
   } = $props()
 
+  const FORM_MODE_STORAGE_KEY = 'bunny-request-form-mode'
   const pathKeys = $derived([...operation.path.matchAll(/\{([^}]+)\}/g)].map(match => match[1]))
   let copyLabel = $state('Copy cURL')
-  let formMode = $state(false)
+  let formMode = $state(localStorage.getItem(FORM_MODE_STORAGE_KEY) === 'on')
+
+  function toggleFormMode() {
+    if (!bodySchema) return
+    formMode = !formMode
+    localStorage.setItem(FORM_MODE_STORAGE_KEY, formMode ? 'on' : 'off')
+  }
 
   function shellQuote(value: string) {
     return `'${value.replaceAll("'", `'"'"'`)}'`
@@ -111,9 +118,7 @@
             title={bodySchema
               ? 'Toggle a structured HTML form generated from the Bunny OpenAPI schema'
               : 'This operation has no JSON request body in the Bunny OpenAPI schema'}
-            onclick={() => {
-              if (bodySchema) formMode = !formMode
-            }}
+            onclick={toggleFormMode}
           >
             <span>Form mode</span>
             <i class:active={!formMode}>OFF</i>
