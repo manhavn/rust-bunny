@@ -204,6 +204,25 @@ directory, vì vậy runtime không cần chạy Node.js.
 Web token chỉ xác thực Web UI cục bộ. Browser không bao giờ nhận Bunny API key
 đã lưu.
 
+### Phát triển local
+
+Chạy đồng thời Rust backend và Vite UI:
+
+```bash
+./dev web serve
+```
+
+Mở <http://127.0.0.1:5173>. Vite proxy `/api` và `/healthz` sang Rust server tại
+`http://127.0.0.1:7331`; khi một tiến trình dừng hoặc nhấn `Ctrl+C`, script sẽ
+dừng cả hai. Các chế độ phát triển khác:
+
+```bash
+./dev web ui                 # Chỉ chạy Vite
+./dev cli --help             # Chạy CLI bằng Cargo
+./dev check                  # Frontend lint + Cargo check/Clippy
+./dev test                   # Frontend lint + Rust tests
+```
+
 ### Quản lý Web token
 
 ```bash

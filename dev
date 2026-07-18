@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+BACKEND_PID=""
+FRONTEND_PID=""
+
+usage() {
+  cat <<'EOF'
+Usage:
+  ./dev web serve [bunny options]  Run Rust API server and Vite UI together.
+  ./dev web ui [vite options]      Run only the Vite development server.
+  ./dev cli [bunny arguments]     Run the Bunny CLI with cargo.
+  ./dev check                     Run frontend and Rust checks.
+  ./dev test                      Run frontend lint and Rust tests.
+  ./dev --help                    Show this help.
+
+Development URLs:
+  UI:       http://127.0.0.1:5173
+  Backend:  http://127.0.0.1:7331
+EOF
+}
+
+cleanup() {
+  trap - EXIT INT TERM
+  if [[ -n "$FRONTEND_PID" ]] && kill -0 "$FRONTEND_PID" 2>/dev/null; then
+    kill "$FRONTEND_PID" 2>/dev/null || true
+  fi
+  if [[ -n "$BACKEND_PID" ]] && kill -0 "$BACKEND_PID" 2>/dev/null; then
+    kill "$BACKEND_PID" 2>/dev/null || true
+  fi
+  [[ -z "$FRONTEND_PID" ]] || wait "$FRONTEND_PID" 2>/dev/null || true
+  [[ -z "$BACKEND_PID" ]] || wait "$BACKEND_PID" 2>/dev/null || true
+}
+
+run_web() {
+  trap cleanup EXIT INT TERM
+
+  printf '%s\n' \
+    '==> Rust backend: http://127.0.0.1:7331' \
+    '==> Vite UI:     http://127.0.0.1:5173'
+
+  cargo run --manifest-path "$ROOT_DIR/Cargo.toml" --bin bunny -- web serve "$@" &
+  BACKEND_PID=$!
+
+  npm --prefix "$ROOT_DIR/web" run dev -- --host 127.0.0.1 &
+  FRONTEND_PID=$!
+
+  wait -n "$BACKEND_PID" "$FRONTEND_PID"
+}
+
+case "${1:-}" in
+  web)
+    case "${2:-}" in
+      serve)
+        shift 2
+        run_web "$@"
+        ;;
+      ui)
+        shift 2
+        exec npm --prefix "$ROOT_DIR/web" run dev -- --host 127.0.0.1 "$@"
+        ;;
+      *)
+        printf 'Error: expected "serve" or "ui" after "web".\n\n' >&2
+        usage >&2
+        exit 2
+        ;;
+    esac
+    ;;
+  cli)
+    shift
+    exec cargo run --manifest-path "$ROOT_DIR/Cargo.toml" --bin bunny -- "$@"
+    ;;
+  check)
+    npm --prefix "$ROOT_DIR/web" run lint
+    cargo check --manifest-path "$ROOT_DIR/Cargo.toml" --workspace --all-targets --all-features
+    cargo clippy --manifest-path "$ROOT_DIR/Cargo.toml" --workspace --all-targets --all-features -- -D warnings
+    ;;
+  test)
+    npm --prefix "$ROOT_DIR/web" run lint
+    cargo test --manifest-path "$ROOT_DIR/Cargo.toml" --workspace --all-features
+    ;;
+  -h|--help)
+    usage
+    ;;
+  "")
+    usage
+    exit 2
+    ;;
+  *)
+    printf 'Error: unknown development mode: %s\n\n' "$1" >&2
+    usage >&2
+    exit 2
+    ;;
+esac

@@ -208,6 +208,25 @@ complete Vite asset directory, so no Node.js process is required at runtime.
 The Web token authenticates the local UI. The browser never receives stored
 Bunny API keys.
 
+### Local development
+
+Run the Rust backend and Vite UI concurrently:
+
+```bash
+./dev web serve
+```
+
+Open <http://127.0.0.1:5173>. Vite proxies `/api` and `/healthz` to the Rust
+server at `http://127.0.0.1:7331`; stopping either process or pressing `Ctrl+C`
+stops both. Other development modes:
+
+```bash
+./dev web ui                 # Vite only
+./dev cli --help             # Cargo-run the CLI
+./dev check                  # Frontend lint + Cargo check/Clippy
+./dev test                   # Frontend lint + Rust tests
+```
+
 ### Web token management
 
 ```bash

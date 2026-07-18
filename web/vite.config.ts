@@ -2,6 +2,12 @@ import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 
 export default defineConfig({
+  server: {
+    proxy: {
+      '/api': 'http://127.0.0.1:7331',
+      '/healthz': 'http://127.0.0.1:7331',
+    },
+  },
   plugins: [
     svelte(),
     {
