@@ -74,7 +74,40 @@ function exampleFor(input, name = 'value', depth = 0) {
   return stringExample(name, schema.format)
 }
 
+function formSchemaFor(input) {
+  const schema = resolve(input)
+  const required = new Set(schema.required ?? [])
+  return {
+    fields: Object.entries(schema.properties ?? {}).map(([name, inputProperty]) => {
+      const property = resolve(inputProperty)
+      const enumValues = property.enum ?? []
+      const enumNames = property['x-enumNames'] ?? []
+      return {
+        name,
+        type: property.type ?? (property.properties ? 'object' : 'string'),
+        ...(property.format ? { format: property.format } : {}),
+        ...(inputProperty.description ?? property.description
+          ? { description: inputProperty.description ?? property.description }
+          : {}),
+        required: required.has(name),
+        nullable: Boolean(inputProperty.nullable ?? property.nullable),
+        ...(property.minimum !== undefined ? { minimum: property.minimum } : {}),
+        ...(property.maximum !== undefined ? { maximum: property.maximum } : {}),
+        ...(enumValues.length
+          ? {
+              options: enumValues.map((value, index) => ({
+                value,
+                label: enumNames[index] ?? String(value),
+              })),
+            }
+          : {}),
+      }
+    }),
+  }
+}
+
 const examples = {}
+const formSchemas = {}
 for (const [path, pathItem] of Object.entries(document.paths ?? {})) {
   for (const [method, operation] of Object.entries(pathItem)) {
     const schema = operation?.requestBody?.content?.['application/json']?.schema
@@ -84,20 +117,30 @@ for (const [path, pathItem] of Object.entries(document.paths ?? {})) {
       null,
       2,
     )
+    formSchemas[signature(method, path)] = formSchemaFor(schema)
   }
 }
 
 const generated = `// Generated from bunny.net Core API OpenAPI. Do not edit by hand.
 // Source: https://core-api-public-docs.b-cdn.net/docs/v3/public.json
-import type { Operation } from '../types'
+import type { Operation, RequestBodySchema } from '../types'
 
 const REQUEST_EXAMPLES: Record<string, string> = ${JSON.stringify(examples, null, 2)}
+const REQUEST_SCHEMAS: Record<string, RequestBodySchema> = ${JSON.stringify(formSchemas, null, 2)}
 
-export function requestBodyExample(operation: Operation): string | null {
+function operationSignature(operation: Operation) {
   const signature = \`\${operation.method} \${operation.path}\`
     .toLowerCase()
     .replace(/\\{[^}]+\\}/g, '{}')
-  return REQUEST_EXAMPLES[signature] ?? null
+  return signature
+}
+
+export function requestBodyExample(operation: Operation): string | null {
+  return REQUEST_EXAMPLES[operationSignature(operation)] ?? null
+}
+
+export function requestBodySchema(operation: Operation): RequestBodySchema | null {
+  return REQUEST_SCHEMAS[operationSignature(operation)] ?? null
 }
 `
 

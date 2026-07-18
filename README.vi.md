@@ -192,6 +192,8 @@ Web UI hỗ trợ:
 - Điều hướng đủ 95 Core operation.
 - Form path/query, JSON body chỉnh sửa được và điền sẵn theo schema Core OpenAPI
   chính thức của Bunny, nút copy cURL và response đã format.
+- Form mode tùy chọn với select enum, preset TTL, input đúng kiểu, công tắc
+  boolean, trình sửa array/object JSON, đánh dấu required và submit trực tiếp.
 - Tổng quan connection và credential đang dùng.
 - Import/export settings và full encrypted backup.
 - Layout desktop, tablet và mobile.

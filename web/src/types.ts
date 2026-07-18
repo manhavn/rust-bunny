@@ -7,6 +7,27 @@ export type Operation = {
   destructive: boolean
 }
 
+export type RequestFieldOption = {
+  label: string
+  value: string | number | boolean
+}
+
+export type RequestFieldSchema = {
+  name: string
+  type: string
+  format?: string
+  description?: string
+  required: boolean
+  nullable: boolean
+  minimum?: number
+  maximum?: number
+  options?: RequestFieldOption[]
+}
+
+export type RequestBodySchema = {
+  fields: RequestFieldSchema[]
+}
+
 export type Credential = {
   id: string
   profile_id: string

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Operation } from '../types'
+  import type { Operation, RequestBodySchema } from '../types'
 
   let {
     operation,
@@ -7,6 +7,7 @@
     queryText = $bindable(),
     bodyText = $bindable(),
     bodyExample,
+    bodySchema,
     result,
     busy,
     onBack,
@@ -18,6 +19,7 @@
     queryText: string
     bodyText: string
     bodyExample: string | null
+    bodySchema: RequestBodySchema | null
     result: string
     busy: boolean
     onBack: () => void
@@ -27,6 +29,7 @@
 
   const pathKeys = $derived([...operation.path.matchAll(/\{([^}]+)\}/g)].map(match => match[1]))
   let copyLabel = $state('Copy cURL')
+  let formMode = $state(false)
 
   function shellQuote(value: string) {
     return `'${value.replaceAll("'", `'"'"'`)}'`
@@ -93,26 +96,59 @@
   </div>
 </section>
 <section class="operation-grid">
-  <div class="panel form-panel">
-    <div class="request-heading">
-      <h2>Request</h2>
-      <button class="secondary curl-button" type="button" onclick={copyCurl}>{copyLabel}</button>
+  <div class={`request-column${formMode ? ' form-mode' : ''}`}>
+    <div class="panel form-panel">
+      <div class="request-heading">
+        <h2>Request</h2>
+        <div class="request-actions">
+          {#if bodySchema}
+            <button
+              class="form-mode-switch"
+              class:enabled={formMode}
+              type="button"
+              role="switch"
+              aria-checked={formMode}
+              title="Toggle a structured HTML form generated from the Bunny OpenAPI schema"
+              onclick={() => formMode = !formMode}
+            >
+              <span>Form mode</span>
+              <i class:active={formMode}>ON</i>
+              <i class:active={!formMode}>OFF</i>
+            </button>
+          {/if}
+          <button class="secondary curl-button" type="button" onclick={copyCurl}>{copyLabel}</button>
+        </div>
+      </div>
+      {#each pathKeys as key (key)}
+        <label>{key}<input bind:value={params[key]} placeholder={`Path parameter: ${key}`} /></label>
+      {/each}
+      <label>Query string<input bind:value={queryText} placeholder="page=1&perPage=100" /></label>
+      {#if bodyExample !== null}
+        <label>
+          <span class="field-heading">
+            JSON body
+            <button class="text-button" type="button" onclick={onResetBody}>Restore Bunny example</button>
+          </span>
+          <textarea bind:value={bodyText} rows="12" spellcheck="false"></textarea>
+          <small class="field-help">Pre-filled from the official bunny.net Core OpenAPI schema.</small>
+        </label>
+      {/if}
+      <button class:danger-button={operation.destructive} class="primary" disabled={busy} onclick={onRun}>{busy ? 'Running…' : 'Run operation'}</button>
     </div>
-    {#each pathKeys as key (key)}
-      <label>{key}<input bind:value={params[key]} placeholder={`Path parameter: ${key}`} /></label>
-    {/each}
-    <label>Query string<input bind:value={queryText} placeholder="page=1&perPage=100" /></label>
-    {#if bodyExample !== null}
-      <label>
-        <span class="field-heading">
-          JSON body
-          <button class="text-button" type="button" onclick={onResetBody}>Restore Bunny example</button>
-        </span>
-        <textarea bind:value={bodyText} rows="12" spellcheck="false"></textarea>
-        <small class="field-help">Pre-filled from the official bunny.net Core OpenAPI schema.</small>
-      </label>
+
+    {#if formMode && bodySchema}
+      {#await import('./StructuredRequestForm.svelte') then { default: StructuredRequestForm }}
+        <StructuredRequestForm
+          schema={bodySchema}
+          bind:bodyText
+          {busy}
+          destructive={operation.destructive}
+          onSubmit={onRun}
+        />
+      {:catch error}
+        <div class="panel error">Could not load form mode: {error.message}</div>
+      {/await}
     {/if}
-    <button class:danger-button={operation.destructive} class="primary" disabled={busy} onclick={onRun}>{busy ? 'Running…' : 'Run operation'}</button>
   </div>
   <div class="panel response-panel"><h2>Response</h2><pre>{result || 'Run the operation to inspect its response.'}</pre></div>
 </section>

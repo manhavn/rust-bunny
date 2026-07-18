@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Credential, Operation, WebToken } from './types'
+  import type { Credential, Operation, RequestBodySchema, WebToken } from './types'
 
   let token = $state(sessionStorage.getItem('bunny-web-token') ?? '')
   let authenticated = $state(false)
@@ -15,6 +15,7 @@
   let queryText = $state('')
   let bodyText = $state('{}')
   let bodyExample = $state<string | null>(null)
+  let bodySchema = $state<RequestBodySchema | null>(null)
   let result = $state('')
   let busy = $state(false)
   let theme = $state(localStorage.getItem('bunny-theme') ?? 'dark')
@@ -75,11 +76,13 @@
     queryText = ''
     bodyText = ''
     bodyExample = null
+    bodySchema = null
     result = ''
     sidebarOpen = false
     const examples = await import('./generated/requestExamples')
     if (selected?.id !== operation.id) return
     bodyExample = examples.requestBodyExample(operation)
+    bodySchema = examples.requestBodySchema(operation)
     bodyText = bodyExample ?? ''
   }
 
@@ -347,6 +350,7 @@
               bind:queryText
               bind:bodyText
               {bodyExample}
+              {bodySchema}
               {result}
               {busy}
               onBack={() => selected = null}
