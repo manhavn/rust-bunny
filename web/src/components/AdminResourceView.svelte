@@ -123,6 +123,21 @@
   }
 
   function columnNames(items: Record<string, unknown>[]) {
+    if (resourcePrefix === 'dns.record') {
+      return [
+        'Id',
+        'Type',
+        'Name',
+        'Value',
+        'Ttl',
+        'Accelerated',
+        'AcceleratedPullZoneId',
+        'AccelerationStatus',
+        'AutoSslIssuance',
+        'Comment',
+        'Disabled',
+      ]
+    }
     const names: string[] = []
     for (const item of items.slice(0, 10)) {
       for (const [key, value] of Object.entries(item)) {
