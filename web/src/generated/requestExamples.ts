@@ -4427,6 +4427,744 @@ const REQUEST_SCHEMAS: Record<string, RequestBodySchema> = {
     ]
   }
 }
+const QUERY_SCHEMAS: Record<string, RequestBodySchema> = {
+  "get /dnszone": {
+    "fields": [
+      {
+        "name": "page",
+        "type": "integer",
+        "format": "int32",
+        "required": false,
+        "nullable": false,
+        "minimum": 1,
+        "maximum": 2147483647,
+        "defaultValue": 1
+      },
+      {
+        "name": "perPage",
+        "type": "integer",
+        "format": "int32",
+        "required": false,
+        "nullable": false,
+        "minimum": 5,
+        "maximum": 1000,
+        "defaultValue": 1000
+      },
+      {
+        "name": "search",
+        "type": "string",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "view",
+        "type": "integer",
+        "description": "0 = Full\n1 = Lite",
+        "required": false,
+        "nullable": false,
+        "defaultValue": 0,
+        "options": [
+          {
+            "value": 0,
+            "label": "Full"
+          },
+          {
+            "value": 1,
+            "label": "Lite"
+          }
+        ]
+      }
+    ]
+  },
+  "get /dnszone/{}": {
+    "fields": [
+      {
+        "name": "view",
+        "type": "integer",
+        "description": "0 = Full\n1 = Lite",
+        "required": false,
+        "nullable": false,
+        "defaultValue": 0,
+        "options": [
+          {
+            "value": 0,
+            "label": "Full"
+          },
+          {
+            "value": 1,
+            "label": "Lite"
+          }
+        ]
+      }
+    ]
+  },
+  "get /dnszone/{}/records": {
+    "fields": [
+      {
+        "name": "page",
+        "type": "integer",
+        "format": "int32",
+        "required": false,
+        "nullable": false,
+        "minimum": 1,
+        "maximum": 2147483647,
+        "defaultValue": 1
+      },
+      {
+        "name": "perPage",
+        "type": "integer",
+        "format": "int32",
+        "required": false,
+        "nullable": false,
+        "minimum": 5,
+        "maximum": 1000,
+        "defaultValue": 1000
+      },
+      {
+        "name": "type",
+        "type": "integer",
+        "description": "0 = A\n1 = AAAA\n2 = CNAME\n3 = TXT\n4 = MX\n5 = Redirect\n6 = Flatten\n7 = PullZone\n8 = SRV\n9 = CAA\n10 = PTR\n11 = Script\n12 = NS\n13 = SVCB\n14 = HTTPS\n15 = TLSA",
+        "required": false,
+        "nullable": false,
+        "options": [
+          {
+            "value": 0,
+            "label": "A"
+          },
+          {
+            "value": 1,
+            "label": "AAAA"
+          },
+          {
+            "value": 2,
+            "label": "CNAME"
+          },
+          {
+            "value": 3,
+            "label": "TXT"
+          },
+          {
+            "value": 4,
+            "label": "MX"
+          },
+          {
+            "value": 5,
+            "label": "Redirect"
+          },
+          {
+            "value": 6,
+            "label": "Flatten"
+          },
+          {
+            "value": 7,
+            "label": "PullZone"
+          },
+          {
+            "value": 8,
+            "label": "SRV"
+          },
+          {
+            "value": 9,
+            "label": "CAA"
+          },
+          {
+            "value": 10,
+            "label": "PTR"
+          },
+          {
+            "value": 11,
+            "label": "Script"
+          },
+          {
+            "value": 12,
+            "label": "NS"
+          },
+          {
+            "value": 13,
+            "label": "SVCB"
+          },
+          {
+            "value": 14,
+            "label": "HTTPS"
+          },
+          {
+            "value": 15,
+            "label": "TLSA"
+          }
+        ]
+      },
+      {
+        "name": "search",
+        "type": "string",
+        "required": false,
+        "nullable": true
+      }
+    ]
+  },
+  "get /pullzone": {
+    "fields": [
+      {
+        "name": "page",
+        "type": "integer",
+        "format": "int32",
+        "required": false,
+        "nullable": false,
+        "minimum": 1,
+        "maximum": 2147483647,
+        "defaultValue": 0
+      },
+      {
+        "name": "perPage",
+        "type": "integer",
+        "format": "int32",
+        "required": false,
+        "nullable": false,
+        "minimum": 5,
+        "maximum": 1000,
+        "defaultValue": 1000
+      },
+      {
+        "name": "search",
+        "type": "string",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "includeCertificate",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": false
+      }
+    ]
+  },
+  "get /pullzone/{}": {
+    "fields": [
+      {
+        "name": "includeCertificate",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": false
+      }
+    ]
+  },
+  "get /pullzone/loadfreecertificate": {
+    "fields": [
+      {
+        "name": "hostname",
+        "type": "string",
+        "required": true,
+        "nullable": true
+      },
+      {
+        "name": "useOnlyHttp01",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": true
+      }
+    ]
+  },
+  "post /purge": {
+    "fields": [
+      {
+        "name": "url",
+        "type": "string",
+        "required": true,
+        "nullable": true
+      },
+      {
+        "name": "async",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": false
+      },
+      {
+        "name": "exactPath",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": false
+      }
+    ]
+  },
+  "get /storagezone": {
+    "fields": [
+      {
+        "name": "page",
+        "type": "integer",
+        "format": "int32",
+        "required": false,
+        "nullable": false,
+        "minimum": 1,
+        "maximum": 2147483647,
+        "defaultValue": 0
+      },
+      {
+        "name": "perPage",
+        "type": "integer",
+        "format": "int32",
+        "required": false,
+        "nullable": false,
+        "minimum": 5,
+        "maximum": 1000,
+        "defaultValue": 1000
+      },
+      {
+        "name": "includeDeleted",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": false
+      },
+      {
+        "name": "search",
+        "type": "string",
+        "required": false,
+        "nullable": true
+      }
+    ]
+  },
+  "delete /storagezone/{}": {
+    "fields": [
+      {
+        "name": "deleteLinkedPullZones",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": true
+      }
+    ]
+  },
+  "post /storagezone/resetreadonlypassword": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "integer",
+        "format": "int64",
+        "required": true,
+        "nullable": false
+      }
+    ]
+  },
+  "get /videolibrary": {
+    "fields": [
+      {
+        "name": "page",
+        "type": "integer",
+        "format": "int32",
+        "required": false,
+        "nullable": false,
+        "minimum": 1,
+        "maximum": 2147483647,
+        "defaultValue": 0
+      },
+      {
+        "name": "perPage",
+        "type": "integer",
+        "format": "int32",
+        "required": false,
+        "nullable": false,
+        "minimum": 5,
+        "maximum": 1000,
+        "defaultValue": 1000
+      },
+      {
+        "name": "search",
+        "type": "string",
+        "required": false,
+        "nullable": true
+      }
+    ]
+  },
+  "get /videolibrary/{}/transcribing/statistics": {
+    "fields": [
+      {
+        "name": "dateFrom",
+        "type": "string",
+        "format": "date-time",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "dateTo",
+        "type": "string",
+        "format": "date-time",
+        "required": false,
+        "nullable": true
+      }
+    ]
+  },
+  "get /videolibrary/{}/drm/statistics": {
+    "fields": [
+      {
+        "name": "dateFrom",
+        "type": "string",
+        "format": "date-time",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "dateTo",
+        "type": "string",
+        "format": "date-time",
+        "required": false,
+        "nullable": true
+      }
+    ]
+  },
+  "get /user/audit/{}": {
+    "fields": [
+      {
+        "name": "Product",
+        "type": "array",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "ResourceType",
+        "type": "array",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "ResourceId",
+        "type": "array",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "ActorId",
+        "type": "array",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "Order",
+        "type": "string",
+        "required": false,
+        "nullable": false,
+        "options": [
+          {
+            "value": "Ascending",
+            "label": "Ascending"
+          },
+          {
+            "value": "Descending",
+            "label": "Descending"
+          }
+        ]
+      },
+      {
+        "name": "ContinuationToken",
+        "type": "string",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "Limit",
+        "type": "integer",
+        "format": "int32",
+        "required": false,
+        "nullable": false,
+        "minimum": 1,
+        "maximum": 10000
+      }
+    ]
+  },
+  "get /storagezone/{}/statistics/egress": {
+    "fields": [
+      {
+        "name": "dateFrom",
+        "type": "string",
+        "format": "date-time",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "dateTo",
+        "type": "string",
+        "format": "date-time",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "hourly",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": false
+      }
+    ]
+  },
+  "get /storagezone/{}/statistics": {
+    "fields": [
+      {
+        "name": "dateFrom",
+        "type": "string",
+        "format": "date-time",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "dateTo",
+        "type": "string",
+        "format": "date-time",
+        "required": false,
+        "nullable": true
+      }
+    ]
+  },
+  "get /pullzone/{}/optimizer/statistics": {
+    "fields": [
+      {
+        "name": "dateFrom",
+        "type": "string",
+        "format": "date-time",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "dateTo",
+        "type": "string",
+        "format": "date-time",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "hourly",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": false
+      }
+    ]
+  },
+  "get /pullzone/{}/originshield/queuestatistics": {
+    "fields": [
+      {
+        "name": "dateFrom",
+        "type": "string",
+        "format": "date-time",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "dateTo",
+        "type": "string",
+        "format": "date-time",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "hourly",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": false
+      }
+    ]
+  },
+  "get /pullzone/{}/safehop/statistics": {
+    "fields": [
+      {
+        "name": "dateFrom",
+        "type": "string",
+        "format": "date-time",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "dateTo",
+        "type": "string",
+        "format": "date-time",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "hourly",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": false
+      }
+    ]
+  },
+  "get /statistics": {
+    "fields": [
+      {
+        "name": "dateFrom",
+        "type": "string",
+        "format": "date-time",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "dateTo",
+        "type": "string",
+        "format": "date-time",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "pullZone",
+        "type": "integer",
+        "format": "int64",
+        "required": false,
+        "nullable": false,
+        "defaultValue": -1
+      },
+      {
+        "name": "serverZoneId",
+        "type": "integer",
+        "format": "int64",
+        "required": false,
+        "nullable": false,
+        "defaultValue": -1
+      },
+      {
+        "name": "loadErrors",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": false
+      },
+      {
+        "name": "hourly",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": false
+      },
+      {
+        "name": "exactRange",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": false
+      },
+      {
+        "name": "loadOriginResponseTimes",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": false
+      },
+      {
+        "name": "loadOriginTraffic",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": false
+      },
+      {
+        "name": "loadRequestsServed",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": false
+      },
+      {
+        "name": "loadBandwidthUsed",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": false
+      },
+      {
+        "name": "loadOriginShieldBandwidth",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": false
+      },
+      {
+        "name": "loadGeographicTrafficDistribution",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": false
+      },
+      {
+        "name": "loadUserBalanceHistory",
+        "type": "boolean",
+        "required": false,
+        "nullable": false,
+        "defaultValue": false
+      }
+    ]
+  },
+  "get /search": {
+    "fields": [
+      {
+        "name": "search",
+        "type": "string",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "from",
+        "type": "integer",
+        "format": "int32",
+        "required": false,
+        "nullable": false,
+        "defaultValue": 0
+      },
+      {
+        "name": "size",
+        "type": "integer",
+        "format": "int32",
+        "required": false,
+        "nullable": false,
+        "defaultValue": 20
+      }
+    ]
+  },
+  "get /dnszone/{}/statistics": {
+    "fields": [
+      {
+        "name": "dateFrom",
+        "type": "string",
+        "format": "date-time",
+        "required": false,
+        "nullable": true
+      },
+      {
+        "name": "dateTo",
+        "type": "string",
+        "format": "date-time",
+        "required": false,
+        "nullable": true
+      }
+    ]
+  },
+  "get /apikey": {
+    "fields": [
+      {
+        "name": "page",
+        "type": "integer",
+        "format": "int32",
+        "required": false,
+        "nullable": false,
+        "minimum": 1,
+        "maximum": 2147483647,
+        "defaultValue": 1
+      },
+      {
+        "name": "perPage",
+        "type": "integer",
+        "format": "int32",
+        "required": false,
+        "nullable": false,
+        "minimum": 5,
+        "maximum": 1000,
+        "defaultValue": 1000
+      }
+    ]
+  }
+}
 
 function operationSignature(operation: Operation) {
   const signature = `${operation.method} ${operation.path}`
@@ -4441,4 +5179,8 @@ export function requestBodyExample(operation: Operation): string | null {
 
 export function requestBodySchema(operation: Operation): RequestBodySchema | null {
   return REQUEST_SCHEMAS[operationSignature(operation)] ?? null
+}
+
+export function requestQuerySchema(operation: Operation): RequestBodySchema | null {
+  return QUERY_SCHEMAS[operationSignature(operation)] ?? null
 }

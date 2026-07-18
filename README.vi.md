@@ -196,7 +196,8 @@ Web UI hỗ trợ:
   boolean, trình sửa array/object JSON, đánh dấu required và submit trực tiếp.
 - Core UI mode lưu trạng thái, có resource dashboard, bảng dữ liệu trực tiếp,
   tìm kiếm, refresh, action từng dòng, form create/edit theo schema, xác nhận
-  delete, xem chi tiết và nhóm action ngoài CRUD.
+  delete, xem chi tiết, query filter typed theo OpenAPI, đầy đủ field response và
+  nhóm action ngoài CRUD.
 - Tổng quan connection và credential đang dùng.
 - Import/export settings và full encrypted backup.
 - Layout desktop, tablet và mobile.

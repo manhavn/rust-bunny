@@ -200,7 +200,8 @@ The Web UI provides:
   switches, JSON collection editors, required markers, and direct submission.
 - Persistent Core UI mode with resource dashboards, live collection tables,
   search, refresh, row actions, schema-driven create/edit forms, delete
-  confirmation, detail views, and grouped non-CRUD actions.
+  confirmation, detail views, typed OpenAPI query filters, complete response
+  fields, and grouped non-CRUD actions.
 - Credential status and local connection overview.
 - Settings export and encrypted full backup import/export.
 - Desktop, tablet, and mobile layouts.

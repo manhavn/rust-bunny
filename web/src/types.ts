@@ -21,6 +21,7 @@ export type RequestFieldSchema = {
   nullable: boolean
   minimum?: number
   maximum?: number
+  defaultValue?: string | number | boolean
   options?: RequestFieldOption[]
 }
 

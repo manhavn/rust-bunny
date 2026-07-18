@@ -32,6 +32,8 @@
   let actionParams = $state<Record<string, string>>({})
   let actionBody = $state('')
   let actionSchema = $state<RequestBodySchema | null>(null)
+  let actionQuerySchema = $state<RequestBodySchema | null>(null)
+  let actionQuery = $state<Record<string, string>>({})
   let actionBusy = $state(false)
   let activeResource = $state('')
   let collectionParams = $state<Record<string, string>>({})
@@ -46,7 +48,9 @@
       ?? operations.find(item => item.method === 'GET' && !item.path.includes('{'))
       ?? null,
   )
-  const resourcePrefix = $derived(listOperation?.id.replace(/\.list$/, '') ?? '')
+  const resourcePrefix = $derived(
+    listOperation?.id.endsWith('.list') ? listOperation.id.replace(/\.list$/, '') : '',
+  )
   const resourceOperations = $derived(
     resourcePrefix
       ? operations.filter(item => item.id === resourcePrefix || item.id.startsWith(`${resourcePrefix}.`))
@@ -140,9 +144,8 @@
     }
     const names: string[] = []
     for (const item of items.slice(0, 10)) {
-      for (const [key, value] of Object.entries(item)) {
-        if (!names.includes(key) && (value === null || typeof value !== 'object')) names.push(key)
-        if (names.length >= 6) return names
+      for (const key of Object.keys(item)) {
+        if (!names.includes(key)) names.push(key)
       }
     }
     return names
@@ -227,6 +230,17 @@
     const examples = await import('../generated/requestExamples')
     if (action?.id !== operation.id) return
     actionSchema = examples.requestBodySchema(operation)
+    actionQuerySchema = examples.requestQuerySchema(operation)
+    actionQuery = Object.fromEntries(
+      (actionQuerySchema?.fields ?? []).map(field => [
+        field.name,
+        field.defaultValue !== undefined
+          ? String(field.defaultValue)
+          : field.required && field.options?.length
+            ? String(field.options[0].value)
+            : '',
+      ]),
+    )
     const example = examples.requestBodyExample(operation)
     if (!example) {
       actionBody = ''
@@ -248,6 +262,8 @@
     actionParams = {}
     actionBody = ''
     actionSchema = null
+    actionQuerySchema = null
+    actionQuery = {}
   }
 
   async function submitAction() {
@@ -259,12 +275,15 @@
       const payload = await onExecute(
         action,
         actionParams,
-        [],
+        Object.entries(actionQuery).filter(([, value]) => value !== ''),
         actionBody.trim() ? JSON.parse(actionBody) : null,
       )
       message = `${action.summary} completed successfully.`
       rawResponse = payload
-      if (action.method === 'GET') {
+      if (action.id === listOperation?.id) {
+        records = normalizeRecords(payload)
+        closeAction()
+      } else if (action.method === 'GET') {
         const normalized = normalizeRecords(payload)
         if (normalized.length) actionRecord = normalized[0]
       } else {
@@ -314,6 +333,7 @@
     <div><p class="eyebrow">ADMIN UI</p><h1>{group}</h1><p class="muted">Browse and manage {group} resources.</p></div>
     <div class="admin-toolbar">
       {#if createOperation}<button class="primary" onclick={() => openAction(createOperation)}>＋ Create</button>{/if}
+      {#if listOperation}<button class="secondary" onclick={() => openAction(listOperation)}>☷ Filters</button>{/if}
       <button class="secondary" disabled={loading || !listOperation} onclick={() => refresh()}>
         {loading ? 'Refreshing…' : '↻ Refresh'}
       </button>
@@ -358,6 +378,39 @@
       {#each pathKeys(action) as key (key)}
         <label>{key}<input bind:value={actionParams[key]} placeholder={`Required path value: ${key}`} /></label>
       {/each}
+      {#if actionQuerySchema}
+        <div class="admin-query-fields">
+          <div><h3>Query filters</h3><small>Typed from the Bunny OpenAPI definition.</small></div>
+          {#each actionQuerySchema.fields as field (field.name)}
+            <label>
+              <span>{field.name}{#if field.required} <b>Required</b>{/if}</span>
+              {#if field.options?.length}
+                <select bind:value={actionQuery[field.name]} required={field.required}>
+                  {#if !field.required}<option value="">Not set</option>{/if}
+                  {#each field.options as option (option.value)}
+                    <option value={String(option.value)}>{option.label} ({option.value})</option>
+                  {/each}
+                </select>
+              {:else if field.type === 'boolean'}
+                <select bind:value={actionQuery[field.name]} required={field.required}>
+                  {#if !field.required}<option value="">Not set</option>{/if}
+                  <option value="true">Enabled</option>
+                  <option value="false">Disabled</option>
+                </select>
+              {:else}
+                <input
+                  bind:value={actionQuery[field.name]}
+                  type={field.type === 'integer' || field.type === 'number' ? 'number' : field.format === 'date' ? 'date' : 'text'}
+                  min={field.minimum}
+                  max={field.maximum}
+                  required={field.required}
+                />
+              {/if}
+              {#if field.description}<small>{field.description}</small>{/if}
+            </label>
+          {/each}
+        </div>
+      {/if}
       {#if actionSchema}
         {#await import('./StructuredRequestForm.svelte') then { default: StructuredRequestForm }}
           <StructuredRequestForm

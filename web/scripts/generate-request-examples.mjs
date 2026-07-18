@@ -74,50 +74,64 @@ function exampleFor(input, name = 'value', depth = 0) {
   return stringExample(name, schema.format)
 }
 
+function fieldSchema(name, inputProperty, required) {
+  const property = resolve(inputProperty)
+  const enumValues = property.enum ?? []
+  const enumNames = property['x-enumNames'] ?? []
+  const defaultValue = inputProperty.default ?? property.default
+  return {
+    name,
+    type: property.type ?? (property.properties ? 'object' : 'string'),
+    ...(property.format ? { format: property.format } : {}),
+    ...(inputProperty.description ?? property.description
+      ? { description: inputProperty.description ?? property.description }
+      : {}),
+    required,
+    nullable: Boolean(inputProperty.nullable ?? property.nullable),
+    ...(property.minimum !== undefined ? { minimum: property.minimum } : {}),
+    ...(property.maximum !== undefined ? { maximum: property.maximum } : {}),
+    ...(defaultValue !== undefined ? { defaultValue } : {}),
+    ...(enumValues.length
+      ? {
+          options: enumValues.map((value, index) => ({
+            value,
+            label: enumNames[index] ?? String(value),
+          })),
+        }
+      : {}),
+  }
+}
+
 function formSchemaFor(input) {
   const schema = resolve(input)
   const required = new Set(schema.required ?? [])
   return {
-    fields: Object.entries(schema.properties ?? {}).map(([name, inputProperty]) => {
-      const property = resolve(inputProperty)
-      const enumValues = property.enum ?? []
-      const enumNames = property['x-enumNames'] ?? []
-      return {
-        name,
-        type: property.type ?? (property.properties ? 'object' : 'string'),
-        ...(property.format ? { format: property.format } : {}),
-        ...(inputProperty.description ?? property.description
-          ? { description: inputProperty.description ?? property.description }
-          : {}),
-        required: required.has(name),
-        nullable: Boolean(inputProperty.nullable ?? property.nullable),
-        ...(property.minimum !== undefined ? { minimum: property.minimum } : {}),
-        ...(property.maximum !== undefined ? { maximum: property.maximum } : {}),
-        ...(enumValues.length
-          ? {
-              options: enumValues.map((value, index) => ({
-                value,
-                label: enumNames[index] ?? String(value),
-              })),
-            }
-          : {}),
-      }
-    }),
+    fields: Object.entries(schema.properties ?? {}).map(([name, property]) =>
+      fieldSchema(name, property, required.has(name))),
+  }
+}
+
+function querySchemaFor(operation) {
+  const parameters = (operation.parameters ?? []).filter(parameter => parameter.in === 'query')
+  return {
+    fields: parameters.map(parameter =>
+      fieldSchema(parameter.name, parameter.schema ?? {}, Boolean(parameter.required))),
   }
 }
 
 const examples = {}
 const formSchemas = {}
+const querySchemas = {}
 for (const [path, pathItem] of Object.entries(document.paths ?? {})) {
   for (const [method, operation] of Object.entries(pathItem)) {
     const schema = operation?.requestBody?.content?.['application/json']?.schema
-    if (!schema) continue
-    examples[signature(method, path)] = JSON.stringify(
-      exampleFor(schema),
-      null,
-      2,
-    )
-    formSchemas[signature(method, path)] = formSchemaFor(schema)
+    const key = signature(method, path)
+    const querySchema = querySchemaFor(operation)
+    if (querySchema.fields.length) querySchemas[key] = querySchema
+    if (schema) {
+      examples[key] = JSON.stringify(exampleFor(schema), null, 2)
+      formSchemas[key] = formSchemaFor(schema)
+    }
   }
 }
 
@@ -127,6 +141,7 @@ import type { Operation, RequestBodySchema } from '../types'
 
 const REQUEST_EXAMPLES: Record<string, string> = ${JSON.stringify(examples, null, 2)}
 const REQUEST_SCHEMAS: Record<string, RequestBodySchema> = ${JSON.stringify(formSchemas, null, 2)}
+const QUERY_SCHEMAS: Record<string, RequestBodySchema> = ${JSON.stringify(querySchemas, null, 2)}
 
 function operationSignature(operation: Operation) {
   const signature = \`\${operation.method} \${operation.path}\`
@@ -141,6 +156,10 @@ export function requestBodyExample(operation: Operation): string | null {
 
 export function requestBodySchema(operation: Operation): RequestBodySchema | null {
   return REQUEST_SCHEMAS[operationSignature(operation)] ?? null
+}
+
+export function requestQuerySchema(operation: Operation): RequestBodySchema | null {
+  return QUERY_SCHEMAS[operationSignature(operation)] ?? null
 }
 `
 
