@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { Operation, RequestBodySchema } from '../types'
-  import StructuredRequestForm from './StructuredRequestForm.svelte'
 
   type ExecuteOperation = (
     operation: Operation,
@@ -272,13 +271,17 @@
         <label>{key}<input bind:value={actionParams[key]} placeholder={`Required path value: ${key}`} /></label>
       {/each}
       {#if actionSchema}
-        <StructuredRequestForm
-          schema={actionSchema}
-          bind:bodyText={actionBody}
-          busy={actionBusy}
-          destructive={action.destructive}
-          onSubmit={submitAction}
-        />
+        {#await import('./StructuredRequestForm.svelte') then { default: StructuredRequestForm }}
+          <StructuredRequestForm
+            schema={actionSchema}
+            bind:bodyText={actionBody}
+            busy={actionBusy}
+            destructive={action.destructive}
+            onSubmit={submitAction}
+          />
+        {:catch error}
+          <div class="error">Could not load the request form: {error.message}</div>
+        {/await}
       {:else}
         <button class:danger-button={action.destructive} class="primary" disabled={actionBusy} onclick={submitAction}>
           {actionBusy ? 'Running…' : action.method === 'GET' ? 'Load details' : 'Run action'}
