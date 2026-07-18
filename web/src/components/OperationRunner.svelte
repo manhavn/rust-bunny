@@ -101,21 +101,24 @@
       <div class="request-heading">
         <h2>Request</h2>
         <div class="request-actions">
-          {#if bodySchema}
-            <button
-              class="form-mode-switch"
-              class:enabled={formMode}
-              type="button"
-              role="switch"
-              aria-checked={formMode}
-              title="Toggle a structured HTML form generated from the Bunny OpenAPI schema"
-              onclick={() => formMode = !formMode}
-            >
-              <span>Form mode</span>
-              <i class:active={formMode}>ON</i>
-              <i class:active={!formMode}>OFF</i>
-            </button>
-          {/if}
+          <button
+            class="form-mode-switch"
+            class:enabled={formMode}
+            type="button"
+            role="switch"
+            aria-checked={formMode}
+            aria-disabled={!bodySchema}
+            title={bodySchema
+              ? 'Toggle a structured HTML form generated from the Bunny OpenAPI schema'
+              : 'This operation has no JSON request body in the Bunny OpenAPI schema'}
+            onclick={() => {
+              if (bodySchema) formMode = !formMode
+            }}
+          >
+            <span>Form mode</span>
+            <i class:active={formMode}>ON</i>
+            <i class:active={!formMode}>OFF</i>
+          </button>
           <button class="secondary curl-button" type="button" onclick={copyCurl}>{copyLabel}</button>
         </div>
       </div>
