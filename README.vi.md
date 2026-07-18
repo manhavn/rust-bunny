@@ -212,7 +212,9 @@ Web token chỉ xác thực Web UI cục bộ. Browser không bao giờ nhận B
 Dùng công tắc `UI mode [OFF | ON]` trên top bar để đổi phần Core API từ catalog
 operation sang giao diện quản trị. Trạng thái được lưu trong browser. Mục `All
 operations` trở thành resource hub; mỗi nhóm Core tự tải collection endpoint và
-hiển thị các khả năng CRUD có trong Bunny OpenAPI registry.
+hiển thị các khả năng CRUD có trong Bunny OpenAPI registry. Nhóm có nhiều
+resource sẽ dùng tab; ví dụ DNS tách Zones và Records, trong đó Records được lọc
+theo `zoneId` đang chọn.
 
 ### Phát triển local
 

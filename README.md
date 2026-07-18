@@ -217,7 +217,9 @@ Use the `UI mode [OFF | ON]` switch in the top bar to change Core API navigation
 from the operation catalog to an admin interface. The preference is stored in
 the browser. `All operations` becomes a resource hub, while each Core group
 loads its collection endpoint and exposes the CRUD capabilities available in
-the Bunny OpenAPI registry.
+the Bunny OpenAPI registry. Groups with multiple resources use tabs; DNS, for
+example, separates Zones and Records, with Records scoped by the selected
+`zoneId`.
 
 ### Local development
 

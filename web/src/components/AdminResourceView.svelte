@@ -33,9 +33,16 @@
   let actionBody = $state('')
   let actionSchema = $state<RequestBodySchema | null>(null)
   let actionBusy = $state(false)
+  let activeResource = $state('')
+  let collectionParams = $state<Record<string, string>>({})
+  let initializedGroup = $state('')
 
+  const listOperations = $derived(
+    operations.filter(item => item.id.endsWith('.list')),
+  )
   const listOperation = $derived(
-    operations.find(item => item.id.endsWith('.list'))
+    listOperations.find(item => item.id.replace(/\.list$/, '') === activeResource)
+      ?? listOperations[0]
       ?? operations.find(item => item.method === 'GET' && !item.path.includes('{'))
       ?? null,
   )
@@ -79,7 +86,20 @@
 
   $effect(() => {
     const currentGroup = group
-    if (currentGroup !== 'all') void refresh(currentGroup)
+    const prefixes = listOperations.map(item => item.id.replace(/\.list$/, ''))
+    if (currentGroup !== 'all' && currentGroup !== initializedGroup) {
+      initializedGroup = currentGroup
+      if (prefixes.length) {
+        selectResource(prefixes[0])
+      } else {
+        activeResource = ''
+        collectionParams = {}
+        records = []
+        rawResponse = null
+        const fallback = operations.find(item => item.method === 'GET' && !item.path.includes('{'))
+        if (fallback) void refresh(currentGroup, fallback)
+      }
+    }
   })
 
   function capabilityLabels(items: Operation[]) {
@@ -132,21 +152,47 @@
   function paramsFromRecord(operation: Operation, record: Record<string, unknown> | null) {
     return Object.fromEntries(pathKeys(operation).map(key => {
       const direct = record ? rowValue(record, key) : undefined
+      const context = collectionParams[key]
       const fallback = record ? rowValue(record, 'id') ?? rowValue(record, 'guid') : undefined
-      return [key, direct === undefined ? String(fallback ?? '') : String(direct)]
+      return [key, direct === undefined ? String(context ?? fallback ?? '') : String(direct)]
     }))
   }
 
-  async function refresh(expectedGroup = group) {
-    if (!listOperation) {
+  function resourceLabel(prefix: string) {
+    const name = prefix.split('.').at(-1) ?? prefix
+    return name.endsWith('s') ? name : `${name}s`
+  }
+
+  function selectResource(prefix: string) {
+    activeResource = prefix
+    const operation = listOperations.find(item => item.id.replace(/\.list$/, '') === prefix)
+    collectionParams = Object.fromEntries(
+      operation ? pathKeys(operation).map(key => [key, '']) : [],
+    )
+    records = []
+    rawResponse = null
+    message = ''
+    search = ''
+    closeAction()
+    if (operation && pathKeys(operation).length === 0) void refresh(group, operation)
+  }
+
+  async function refresh(expectedGroup = group, operation = listOperation) {
+    if (!operation) {
       records = []
       rawResponse = null
+      return
+    }
+    const missing = pathKeys(operation).filter(key => !collectionParams[key]?.trim())
+    if (missing.length) {
+      message = `Enter ${missing.join(', ')} to load ${resourceLabel(resourcePrefix)}.`
+      records = []
       return
     }
     loading = true
     message = ''
     try {
-      const payload = await onExecute(listOperation)
+      const payload = await onExecute(operation, collectionParams)
       if (group !== expectedGroup) return
       rawResponse = payload
       records = normalizeRecords(payload)
@@ -258,6 +304,33 @@
       </button>
     </div>
   </section>
+
+  {#if listOperations.length > 1}
+    <nav class="resource-tabs" aria-label={`${group} resource types`}>
+      {#each listOperations as operation (operation.id)}
+        {@const prefix = operation.id.replace(/\.list$/, '')}
+        <button
+          class:active={resourcePrefix === prefix}
+          onclick={() => selectResource(prefix)}
+        >{resourceLabel(prefix)}</button>
+      {/each}
+    </nav>
+  {/if}
+
+  {#if listOperation && pathKeys(listOperation).length}
+    <section class="panel collection-context">
+      <div>
+        <p class="eyebrow">PARENT RESOURCE</p>
+        <h2>Load {resourceLabel(resourcePrefix)}</h2>
+      </div>
+      {#each pathKeys(listOperation) as key (key)}
+        <label>{key}<input bind:value={collectionParams[key]} placeholder={`Enter ${key}`} /></label>
+      {/each}
+      <button class="primary" disabled={loading} onclick={() => refresh()}>
+        {loading ? 'Loading…' : `Load ${resourceLabel(resourcePrefix)}`}
+      </button>
+    </section>
+  {/if}
 
   {#if message}<div class:error={!message.includes('success')} class="admin-message">{message}</div>{/if}
 
