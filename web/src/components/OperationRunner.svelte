@@ -116,8 +116,8 @@
             }}
           >
             <span>Form mode</span>
-            <i class:active={formMode}>ON</i>
             <i class:active={!formMode}>OFF</i>
+            <i class:active={formMode}>ON</i>
           </button>
           <button class="secondary curl-button" type="button" onclick={copyCurl}>{copyLabel}</button>
         </div>
